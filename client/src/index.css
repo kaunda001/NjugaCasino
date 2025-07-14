@@ -1,0 +1,182 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: hsl(210, 40%, 98%);
+  --foreground: hsl(222, 84%, 4.9%);
+  --muted: hsl(210, 40%, 96%);
+  --muted-foreground: hsl(215, 16%, 46.9%);
+  --popover: hsl(210, 40%, 98%);
+  --popover-foreground: hsl(222, 84%, 4.9%);
+  --card: hsl(210, 40%, 98%);
+  --card-foreground: hsl(222, 84%, 4.9%);
+  --border: hsl(214, 32%, 91%);
+  --input: hsl(214, 32%, 91%);
+  --primary: hsl(215, 85%, 61%);
+  --primary-foreground: hsl(210, 40%, 98%);
+  --secondary: hsl(210, 40%, 96%);
+  --secondary-foreground: hsl(222, 84%, 4.9%);
+  --accent: hsl(210, 40%, 96%);
+  --accent-foreground: hsl(222, 84%, 4.9%);
+  --destructive: hsl(0, 84%, 60%);
+  --destructive-foreground: hsl(210, 40%, 98%);
+  --ring: hsl(215, 85%, 61%);
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: hsl(222, 84%, 4.9%);
+  --foreground: hsl(210, 40%, 98%);
+  --muted: hsl(217, 32%, 17%);
+  --muted-foreground: hsl(215, 20%, 65%);
+  --popover: hsl(222, 84%, 4.9%);
+  --popover-foreground: hsl(210, 40%, 98%);
+  --card: hsl(222, 84%, 4.9%);
+  --card-foreground: hsl(210, 40%, 98%);
+  --border: hsl(217, 32%, 17%);
+  --input: hsl(217, 32%, 17%);
+  --primary: hsl(215, 85%, 61%);
+  --primary-foreground: hsl(222, 84%, 4.9%);
+  --secondary: hsl(217, 32%, 17%);
+  --secondary-foreground: hsl(210, 40%, 98%);
+  --accent: hsl(217, 32%, 17%);
+  --accent-foreground: hsl(210, 40%, 98%);
+  --destructive: hsl(0, 62%, 30%);
+  --destructive-foreground: hsl(210, 40%, 98%);
+  --ring: hsl(215, 85%, 61%);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+/* Custom gambling platform styles */
+@layer utilities {
+  .text-primary-dark {
+    color: hsl(222, 84%, 4.9%);
+  }
+  
+  .bg-primary-dark {
+    background-color: hsl(222, 84%, 4.9%);
+  }
+  
+  .text-accent-blue {
+    color: hsl(215, 85%, 61%);
+  }
+  
+  .bg-accent-blue {
+    background-color: hsl(215, 85%, 61%);
+  }
+  
+  .text-success-green {
+    color: hsl(142, 76%, 36%);
+  }
+  
+  .bg-success-green {
+    background-color: hsl(142, 76%, 36%);
+  }
+  
+  .text-danger-red {
+    color: hsl(0, 84%, 60%);
+  }
+  
+  .bg-danger-red {
+    background-color: hsl(0, 84%, 60%);
+  }
+  
+  .text-warning-yellow {
+    color: hsl(45, 93%, 47%);
+  }
+  
+  .bg-warning-yellow {
+    background-color: hsl(45, 93%, 47%);
+  }
+  
+  .text-muted-light {
+    color: hsl(215, 16%, 46.9%);
+  }
+}
+
+/* Animation classes for gambling elements */
+@layer utilities {
+  .animate-pulse-slow {
+    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  .animate-bounce-slow {
+    animation: bounce 2s infinite;
+  }
+  
+  .animate-spin-slow {
+    animation: spin 3s linear infinite;
+  }
+}
+
+/* Card game specific styles */
+@layer utilities {
+  .card-shadow {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+  
+  .card-hover {
+    transition: transform 0.2s ease-in-out;
+  }
+  
+  .card-hover:hover {
+    transform: translateY(-2px);
+  }
+  
+  .game-board {
+    background: linear-gradient(135deg, hsl(215, 32%, 27%) 0%, hsl(215, 32%, 17%) 100%);
+  }
+  
+  .betting-tier-entry {
+    background: linear-gradient(135deg, hsl(142, 76%, 36%) 0%, hsl(142, 76%, 26%) 100%);
+  }
+  
+  .betting-tier-bronze {
+    background: linear-gradient(135deg, hsl(25, 95%, 53%) 0%, hsl(25, 95%, 43%) 100%);
+  }
+  
+  .betting-tier-silver {
+    background: linear-gradient(135deg, hsl(210, 40%, 78%) 0%, hsl(210, 40%, 68%) 100%);
+  }
+  
+  .betting-tier-gold {
+    background: linear-gradient(135deg, hsl(45, 93%, 47%) 0%, hsl(45, 93%, 37%) 100%);
+  }
+  
+  .betting-tier-platinum {
+    background: linear-gradient(135deg, hsl(240, 21%, 65%) 0%, hsl(240, 21%, 55%) 100%);
+  }
+  
+  .betting-tier-diamond {
+    background: linear-gradient(135deg, hsl(200, 100%, 70%) 0%, hsl(200, 100%, 60%) 100%);
+  }
+  
+  .betting-tier-elite {
+    background: linear-gradient(135deg, hsl(285, 100%, 70%) 0%, hsl(285, 100%, 60%) 100%);
+  }
+}
+
+/* Responsive design utilities */
+@layer utilities {
+  .mobile-padding {
+    @apply px-4 sm:px-6 lg:px-8;
+  }
+  
+  .container-max {
+    @apply max-w-7xl mx-auto;
+  }
+  
+  .gambling-gradient {
+    background: linear-gradient(135deg, hsl(222, 84%, 4.9%) 0%, hsl(215, 32%, 17%) 50%, hsl(222, 84%, 4.9%) 100%);
+  }
+}
