@@ -29,9 +29,10 @@ Preferred communication style: Simple, everyday language.
 ## Key Components
 
 ### Authentication System
-- Phone number-based authentication using Firebase
-- JWT token verification on the server
-- User registration and login flow with SMS verification
+- Password-based authentication with phone number and additional user data
+- JWT token verification on the server with bcrypt password hashing
+- User registration requires phone number, display name, date of birth (18+), country, and password
+- User login uses phone number and password
 - Session management for WebSocket connections
 
 ### Game Engine
@@ -49,11 +50,13 @@ Preferred communication style: Simple, everyday language.
 ## Data Flow
 
 ### User Authentication Flow
-1. User enters phone number in AuthModal
-2. Firebase sends SMS verification code
-3. User enters code, Firebase validates and returns JWT
-4. Server verifies JWT and creates/retrieves user record
-5. User gains access to game lobby
+1. User selects sign-up or sign-in mode in AuthModal
+2. For sign-up: User enters phone number, display name, date of birth, country, and password
+3. For sign-in: User enters phone number and password
+4. Server validates age requirement (18+) for sign-up
+5. Server creates account with bcrypt password hashing or authenticates existing user
+6. Server generates JWT token and returns user data
+7. User gains access to game lobby
 
 ### Game Session Flow
 1. User selects game type and stakes in RoomModal
@@ -71,8 +74,9 @@ Preferred communication style: Simple, everyday language.
 ## External Dependencies
 
 ### Authentication
-- **Firebase**: Phone authentication and JWT token management
-- **Firebase Admin SDK**: Server-side token verification
+- **bcrypt**: Password hashing for secure storage
+- **jsonwebtoken**: JWT token generation and verification
+- **Firebase** (legacy): Client SDK still included for potential future use
 
 ### Database
 - **Neon Database**: PostgreSQL hosting with connection pooling

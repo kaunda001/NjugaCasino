@@ -4,8 +4,9 @@ import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { RoomManager } from "./services/roomManager";
 import { verifyIdToken } from "./services/firebaseAdmin";
-import { insertUserSchema } from "@shared/schema";
+import { insertUserSchema, signUpSchema, signInSchema } from "@shared/schema";
 import { z } from "zod";
+import jwt from 'jsonwebtoken';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   const roomManager = RoomManager.getInstance();
@@ -20,8 +21,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     try {
-      const decodedToken = await verifyIdToken(token);
-      const user = await storage.getUserByPhoneNumber(decodedToken.phone_number);
+      const decoded: any = jwt.verify(token, process.env.JWT_SECRET || 'default-secret');
+      const user = await storage.getUser(decoded.userId);
       
       if (!user) {
         return res.status(401).json({ message: 'User not found' });
@@ -35,7 +36,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
   }
 
   // Authentication routes
-  app.post('/api/auth/register', async (req, res) => {
+  app.post('/api/auth/signup', async (req, res) => {
+    try {
+      const userData = signUpSchema.parse(req.body);
+      
+      // Check age requirement (18+)
+      const birthDate = new Date(userData.dateOfBirth);
+      const age = new Date().getFullYear() - birthDate.getFullYear();
+      const monthDiff = new Date().getMonth() - birthDate.getMonth();
+      
+      if (age < 18 || (age === 18 && monthDiff < 0) || 
+          (age === 18 && monthDiff === 0 && new Date().getDate() < birthDate.getDate())) {
+        return res.status(400).json({ message: 'You must be 18 or older to register' });
+      }
+      
+      // Check if user already exists
+      const existingUser = await storage.getUserByPhoneNumber(userData.phoneNumber);
+      if (existingUser) {
+        return res.status(400).json({ message: 'Phone number already registered' });
+      }
+      
+      // Create new user
+      const { confirmPassword, ...userDataForDB } = userData;
+      const newUser = await storage.createUser({
+        ...userDataForDB,
+        balance: 1000 // Starting balance
+      });
+      
+      // Generate JWT token
+      const token = jwt.sign(
+        { userId: newUser.id, phoneNumber: newUser.phoneNumber },
+        process.env.JWT_SECRET || 'default-secret',
+        { expiresIn: '7d' }
+      );
+      
+      // Remove password from response
+      const { password, ...userResponse } = newUser;
+      res.json({ user: userResponse, token });
+    } catch (error) {
+      console.error('Registration error:', error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: 'Registration failed' });
+    }
+  });
+
+  app.post('/api/auth/signin', async (req, res) => {
+    try {
+      const { phoneNumber, password } = signInSchema.parse(req.body);
+      
+      const user = await storage.authenticateUser(phoneNumber, password);
+      if (!user) {
+        return res.status(401).json({ message: 'Invalid phone number or password' });
+      }
+      
+      // Generate JWT token
+      const token = jwt.sign(
+        { userId: user.id, phoneNumber: user.phoneNumber },
+        process.env.JWT_SECRET || 'default-secret',
+        { expiresIn: '7d' }
+      );
+      
+      // Remove password from response
+      const { password: _, ...userResponse } = user;
+      res.json({ user: userResponse, token });
+    } catch (error) {
+      console.error('Login error:', error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      res.status(500).json({ message: 'Login failed' });
+    }
+  });
+
+  app.get('/api/auth/verify', async (req, res) => {
     try {
       const authHeader = req.headers['authorization'];
       const token = authHeader && authHeader.split(' ')[1];
@@ -44,31 +119,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: 'Access token required' });
       }
       
-      const decodedToken = await verifyIdToken(token);
-      const phoneNumber = decodedToken.phone_number;
-      
-      if (!phoneNumber) {
-        return res.status(400).json({ message: 'Phone number required' });
-      }
-      
-      // Check if user already exists
-      let user = await storage.getUserByPhoneNumber(phoneNumber);
+      const decoded: any = jwt.verify(token, process.env.JWT_SECRET || 'default-secret');
+      const user = await storage.getUser(decoded.userId);
       
       if (!user) {
-        // Create new user
-        const userData = insertUserSchema.parse({
-          phoneNumber,
-          displayName: req.body.displayName || phoneNumber,
-          balance: 1000 // Starting balance
-        });
-        
-        user = await storage.createUser(userData);
+        return res.status(401).json({ message: 'User not found' });
       }
       
-      res.json({ user });
+      // Remove password from response
+      const { password, ...userResponse } = user;
+      res.json({ user: userResponse });
     } catch (error) {
-      console.error('Registration error:', error);
-      res.status(500).json({ message: 'Registration failed' });
+      console.error('Token verification error:', error);
+      res.status(403).json({ message: 'Invalid token' });
     }
   });
 
@@ -169,12 +232,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         switch (data.type) {
           case 'authenticate':
             try {
-              const decodedToken = await verifyIdToken(data.token);
-              const user = await storage.getUserByPhoneNumber(decodedToken.phone_number);
+              const decoded: any = jwt.verify(data.token, process.env.JWT_SECRET || 'default-secret');
+              const user = await storage.getUser(decoded.userId);
               
               if (user) {
                 roomManager.addPlayer(user.id, ws);
-                ws.send(JSON.stringify({ type: 'authenticated', user }));
+                const { password, ...userResponse } = user;
+                ws.send(JSON.stringify({ type: 'authenticated', user: userResponse }));
               } else {
                 ws.send(JSON.stringify({ type: 'error', message: 'User not found' }));
               }

@@ -5,7 +5,10 @@ import { z } from "zod";
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   phoneNumber: text("phone_number").notNull().unique(),
+  password: text("password").notNull(),
   displayName: text("display_name"),
+  dateOfBirth: text("date_of_birth").notNull(),
+  country: text("country").notNull(),
   balance: integer("balance").default(0),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
@@ -56,6 +59,21 @@ export const insertUserSchema = createInsertSchema(users).omit({
   createdAt: true,
   updatedAt: true
 });
+
+export const signUpSchema = insertUserSchema.extend({
+  confirmPassword: z.string().min(6, "Password must be at least 6 characters")
+}).refine(data => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"]
+});
+
+export const signInSchema = z.object({
+  phoneNumber: z.string().min(1, "Phone number is required"),
+  password: z.string().min(1, "Password is required")
+});
+
+export type SignUpData = z.infer<typeof signUpSchema>;
+export type SignInData = z.infer<typeof signInSchema>;
 
 export const insertRoomSchema = createInsertSchema(rooms).omit({
   id: true,

@@ -1,4 +1,5 @@
 import { users, rooms, roomPlayers, gameHistory, type User, type InsertUser, type Room, type InsertRoom, type RoomPlayer, type InsertRoomPlayer, type GameHistory, type InsertGameHistory } from "@shared/schema";
+import bcrypt from 'bcrypt';
 
 export interface IStorage {
   // User operations
@@ -6,6 +7,7 @@ export interface IStorage {
   getUserByPhoneNumber(phoneNumber: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUserBalance(userId: number, newBalance: number): Promise<void>;
+  authenticateUser(phoneNumber: string, password: string): Promise<User | null>;
 
   // Room operations
   createRoom(room: InsertRoom): Promise<Room>;
@@ -58,14 +60,24 @@ export class MemStorage implements IStorage {
 
   async createUser(insertUser: InsertUser): Promise<User> {
     const id = this.currentUserId++;
+    const hashedPassword = await bcrypt.hash(insertUser.password, 10);
     const user: User = {
       ...insertUser,
+      password: hashedPassword,
       id,
       createdAt: new Date(),
       updatedAt: new Date()
     };
     this.users.set(id, user);
     return user;
+  }
+
+  async authenticateUser(phoneNumber: string, password: string): Promise<User | null> {
+    const user = Array.from(this.users.values()).find(user => user.phoneNumber === phoneNumber);
+    if (!user) return null;
+    
+    const isValid = await bcrypt.compare(password, user.password);
+    return isValid ? user : null;
   }
 
   async updateUserBalance(userId: number, newBalance: number): Promise<void> {
