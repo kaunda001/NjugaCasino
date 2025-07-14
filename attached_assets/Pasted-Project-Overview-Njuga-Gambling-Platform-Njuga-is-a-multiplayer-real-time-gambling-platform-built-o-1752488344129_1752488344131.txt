@@ -1,0 +1,96 @@
+Project Overview: Njuga Gambling Platform
+Njuga is a multiplayer real-time gambling platform built on Replit with the following features:
+
+🧩 Core Games Implemented
+1. 🎴 Njuga (Card-Based Matching Game)
+Players: 2–6 per room
+
+Objective: Create a winning hand with:
+
+✅ One pair (e.g., 9♦ + 9♠)
+
+✅ Two consecutive cards (e.g., 10♣ + J♠)
+
+Gameplay:
+
+Players draw and discard cards on turns
+
+Max hand size: 4 cards
+
+Can only win with a valid hand pattern
+
+Discards go to a central pile, top card can be claimed
+
+2. 💰 Shansha (Money Grid Game)
+Players: 2 per room
+
+Grid Size: 4×6 per player
+
+Objective: Guess opponent’s money cell placements
+
+Mechanics:
+
+Place 5 monetary values manually
+
+Take turns guessing coordinates
+
+Successful guesses split pot earnings
+
+3. 🔵 Chinshingwa (Checkers Variant)
+Players: 2 per room
+
+Gameplay:
+
+Classic checkers with forfeit system
+
+Forfeit penalty: 50% of stake split (40% house, 10% opponent)
+
+🛠️ Technical Stack
+Frontend: React + Tailwind (Replit client/)
+
+Backend: Node.js + Express + WebSockets (Replit server/)
+
+Realtime Multiplayer: WebSocket-based room management
+
+Data Persistence: Firebase (for users, balances, rooms)
+
+Deployment: Replit web IDE
+
+💸 Betting Room Logic
+Room tiers: K5, K10, K50, K100, K500, K1000, K5000
+
+House cut: 15%
+
+Winner receives: 85% of the pot
+
+Forfeit penalty (in Njuga/Chinshingwa): 20% of stake
+
+✅ Key Features (Implemented or In Progress)
+✅ Phone number-based authentication
+
+✅ Realtime room joining logic (2–6 players max)
+
+✅ Ghost player removal (disconnects handled)
+
+✅ WebSocket game syncing
+
+✅ Game start on 2+ players, locks at 6
+
+🔄 Player readiness toggle (pending)
+
+🔄 Game flow enforcement (Njuga validation, Shansha grid sync)
+
+🔄 Auto-create next room if full
+
+🔧 Current Focus Areas
+ Room player sync: eliminate ghost players 100%
+
+ Fix player_joined crash (undefined.length)
+
+ Finalize turn logic (clockwise management)
+
+ Ready/Start button UX improvements
+
+ Stabilize reconnect logic + session tracking
+
+ Deploy patched version to Replit cleanly
