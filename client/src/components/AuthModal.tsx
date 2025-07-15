@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -149,16 +149,50 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
     }
   };
 
-  const resetForms = () => {
-    signInForm.reset();
-    signUpForm.reset();
-    setMode('signin');
+  // Reset forms when switching modes
+  const handleModeChange = (newMode: 'signin' | 'signup') => {
+    setMode(newMode);
+    
+    // Reset both forms to their default values
+    signInForm.reset({
+      phoneNumber: '',
+      password: ''
+    });
+    
+    signUpForm.reset({
+      phoneNumber: '',
+      password: '',
+      confirmPassword: '',
+      displayName: '',
+      dateOfBirth: '',
+      country: 'ZM'
+    });
   };
+
+  // Reset forms when modal opens
+  React.useEffect(() => {
+    if (isOpen) {
+      signInForm.reset({
+        phoneNumber: '',
+        password: ''
+      });
+      
+      signUpForm.reset({
+        phoneNumber: '',
+        password: '',
+        confirmPassword: '',
+        displayName: '',
+        dateOfBirth: '',
+        country: 'ZM'
+      });
+    }
+  }, [isOpen, signInForm, signUpForm]);
+
+
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
       if (!open) {
-        resetForms();
         onClose();
       }
     }}>
@@ -175,14 +209,14 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
           <div className="flex gap-2">
             <Button
               variant={mode === 'signin' ? 'default' : 'outline'}
-              onClick={() => setMode('signin')}
+              onClick={() => handleModeChange('signin')}
               className="flex-1"
             >
               Sign In
             </Button>
             <Button
               variant={mode === 'signup' ? 'default' : 'outline'}
-              onClick={() => setMode('signup')}
+              onClick={() => handleModeChange('signup')}
               className="flex-1"
             >
               Sign Up
