@@ -6,7 +6,10 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Wallet, Plus, Minus, Users, Settings, LogOut, Phone, CreditCard } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
+import { useLocation } from 'wouter';
+import { useToast } from '@/hooks/use-toast';
 import { RoomModal } from '@/components/RoomModal';
 import { GameRoom } from '@/components/GameRoom';
 import { WalletModal } from '@/components/WalletModal';
@@ -20,6 +23,8 @@ export default function Dashboard() {
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [selectedGameType, setSelectedGameType] = useState<GameType | undefined>();
+  const [, navigate] = useLocation();
+  const { toast } = useToast();
 
   const { data: roomsData } = useQuery({
     queryKey: ['/api/rooms'],
@@ -27,7 +32,14 @@ export default function Dashboard() {
   });
 
   const handleJoinRoom = (room: RoomInfo) => {
-    setSelectedRoom(room);
+    // Navigate to the appropriate game room
+    if (room.gameType === 'njuga') {
+      navigate('/njuga-room', { state: { room } });
+    } else if (room.gameType === 'shansha') {
+      navigate('/shansha-room', { state: { room } });
+    } else if (room.gameType === 'chinshingwa') {
+      navigate('/chinshingwa-room', { state: { room } });
+    }
   };
 
   const handleLeaveRoom = () => {
@@ -38,6 +50,33 @@ export default function Dashboard() {
     setSelectedGameType(gameType);
     setShowRoomModal(true);
   };
+
+  const createRoomMutation = useMutation({
+    mutationFn: async (data: { gameType: GameType; stakes: number }) => {
+      const res = await apiRequest('POST', '/api/rooms', data);
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/rooms'] });
+      setShowRoomModal(false);
+      
+      // Navigate to appropriate game room
+      if (data.gameType === 'njuga') {
+        navigate('/njuga-room', { state: { room: data } });
+      } else if (data.gameType === 'shansha') {
+        navigate('/shansha-room', { state: { room: data } });
+      } else if (data.gameType === 'chinshingwa') {
+        navigate('/chinshingwa-room', { state: { room: data } });
+      }
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
 
   const handleSignOut = async () => {
     await signOut();
@@ -165,48 +204,96 @@ export default function Dashboard() {
                   </TabsList>
                   
                   <TabsContent value="rooms" className="mt-4">
-                    <div className="space-y-4">
-                      {roomsData?.rooms?.length === 0 ? (
-                        <div className="text-center py-8">
-                          <p className="text-gray-600 dark:text-gray-300">No rooms available</p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Create a new room to start playing
-                          </p>
+                    <div className="space-y-6">
+                      {/* Njuga Rooms */}
+                      <div>
+                        <h3 className="text-lg font-semibold text-red-700 dark:text-red-300 mb-3">
+                          🃏 Njuga Rooms (2-6 Players)
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                          {[5, 10, 50, 100, 200, 500, 1000, 5000].map(stakes => {
+                            const room = roomsData?.rooms?.find((r: RoomInfo) => r.gameType === 'njuga' && r.stakes === stakes);
+                            return (
+                              <Card key={`njuga-${stakes}`} className="p-3 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800">
+                                <div className="text-center">
+                                  <div className="text-lg font-bold text-red-700 dark:text-red-300">K{stakes}</div>
+                                  <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                                    {room ? `${room.currentPlayers}/${room.maxPlayers}` : '0/6'} players
+                                  </div>
+                                  <Button 
+                                    onClick={() => room ? handleJoinRoom(room) : createRoomMutation.mutate({ gameType: 'njuga', stakes })}
+                                    disabled={room && room.currentPlayers >= room.maxPlayers}
+                                    size="sm"
+                                    className="w-full"
+                                  >
+                                    {room ? 'Join' : 'Create'}
+                                  </Button>
+                                </div>
+                              </Card>
+                            );
+                          })}
                         </div>
-                      ) : (
-                        roomsData?.rooms?.map((room: RoomInfo) => (
-                          <Card key={room.id} className="cursor-pointer hover:shadow-md transition-shadow">
-                            <CardContent className="p-4">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-3">
-                                  <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                                    <Users className="h-5 w-5 text-primary" />
+                      </div>
+
+                      {/* Shansha Rooms */}
+                      <div>
+                        <h3 className="text-lg font-semibold text-green-700 dark:text-green-300 mb-3">
+                          💰 Shansha Rooms (2 Players)
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {[50, 100, 200, 500, 1000, 5000].map(stakes => {
+                            const room = roomsData?.rooms?.find((r: RoomInfo) => r.gameType === 'shansha' && r.stakes === stakes);
+                            return (
+                              <Card key={`shansha-${stakes}`} className="p-3 bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800">
+                                <div className="text-center">
+                                  <div className="text-lg font-bold text-green-700 dark:text-green-300">K{stakes}</div>
+                                  <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                                    {room ? `${room.currentPlayers}/${room.maxPlayers}` : '0/2'} players
                                   </div>
-                                  <div>
-                                    <h3 className="font-semibold">{room.name}</h3>
-                                    <p className="text-sm text-gray-600 dark:text-gray-300">
-                                      {room.gameType.charAt(0).toUpperCase() + room.gameType.slice(1)}
-                                    </p>
+                                  <Button 
+                                    onClick={() => room ? handleJoinRoom(room) : createRoomMutation.mutate({ gameType: 'shansha', stakes })}
+                                    disabled={room && room.currentPlayers >= room.maxPlayers}
+                                    size="sm"
+                                    className="w-full"
+                                  >
+                                    {room ? 'Join' : 'Create'}
+                                  </Button>
+                                </div>
+                              </Card>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Chinshingwa Rooms */}
+                      <div>
+                        <h3 className="text-lg font-semibold text-blue-700 dark:text-blue-300 mb-3">
+                          ♟️ Chinshingwa Rooms (2 Players)
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {[50, 100, 200, 500, 1000, 5000].map(stakes => {
+                            const room = roomsData?.rooms?.find((r: RoomInfo) => r.gameType === 'chinshingwa' && r.stakes === stakes);
+                            return (
+                              <Card key={`chinshingwa-${stakes}`} className="p-3 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+                                <div className="text-center">
+                                  <div className="text-lg font-bold text-blue-700 dark:text-blue-300">K{stakes}</div>
+                                  <div className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                                    {room ? `${room.currentPlayers}/${room.maxPlayers}` : '0/2'} players
                                   </div>
+                                  <Button 
+                                    onClick={() => room ? handleJoinRoom(room) : createRoomMutation.mutate({ gameType: 'chinshingwa', stakes })}
+                                    disabled={room && room.currentPlayers >= room.maxPlayers}
+                                    size="sm"
+                                    className="w-full"
+                                  >
+                                    {room ? 'Join' : 'Create'}
+                                  </Button>
                                 </div>
-                                <div className="text-right space-y-1">
-                                  <Badge variant="secondary">
-                                    {room.currentPlayers}/{room.maxPlayers}
-                                  </Badge>
-                                  <p className="text-sm font-medium">K{room.stakes}</p>
-                                </div>
-                                <Button 
-                                  size="sm"
-                                  onClick={() => handleJoinRoom(room)}
-                                  disabled={room.currentPlayers >= room.maxPlayers}
-                                >
-                                  Join
-                                </Button>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        ))
-                      )}
+                              </Card>
+                            );
+                          })}
+                        </div>
+                      </div>
                     </div>
                   </TabsContent>
                   

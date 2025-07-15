@@ -34,7 +34,7 @@ export class GameLogic {
     const deck = this.generateDeck();
     const playerHands: { [playerId: string]: Card[] } = {};
     
-    // Deal 3 cards to each player
+    // Deal 3 cards to each player initially
     let cardIndex = 0;
     playerIds.forEach(playerId => {
       playerHands[playerId] = deck.slice(cardIndex, cardIndex + 3);
@@ -44,39 +44,53 @@ export class GameLogic {
     const remainingDeck = deck.slice(cardIndex);
     const discardPile = remainingDeck.splice(0, 1);
     
+    // Random starting player
+    const randomStartIndex = Math.floor(Math.random() * playerIds.length);
+    
     return {
       deck: remainingDeck,
       discardPile,
       playerHands,
-      currentTurn: playerIds[0],
+      currentTurn: playerIds[randomStartIndex],
       hasWinner: false
     };
   }
 
   static validateNjugaWin(hand: Card[]): boolean {
-    if (hand.length !== 3 && hand.length !== 4) return false;
+    // Must have exactly 4 cards to win
+    if (hand.length !== 4) return false;
     
-    // Check for pairs
+    // Count occurrences of each value
     const valueCounts: { [value: string]: number } = {};
     hand.forEach(card => {
       valueCounts[card.value] = (valueCounts[card.value] || 0) + 1;
     });
     
-    const pairs = Object.values(valueCounts).filter(count => count >= 2);
-    if (pairs.length > 0) return true;
+    // Find pairs and singles
+    const pairs: string[] = [];
+    const singles: string[] = [];
     
-    // Check for consecutive cards
-    const values = hand.map(card => card.value);
+    Object.entries(valueCounts).forEach(([value, count]) => {
+      if (count === 2) {
+        pairs.push(value);
+      } else if (count === 1) {
+        singles.push(value);
+      }
+    });
+    
+    // Must have exactly 1 pair and 2 single cards
+    if (pairs.length !== 1 || singles.length !== 2) return false;
+    
+    // Check if the two singles are consecutive
     const valueOrder = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-    const sortedValues = values.sort((a, b) => valueOrder.indexOf(a) - valueOrder.indexOf(b));
+    const singleIndexes = singles.map(val => valueOrder.indexOf(val)).sort((a, b) => a - b);
     
-    for (let i = 0; i < sortedValues.length - 1; i++) {
-      const currentIndex = valueOrder.indexOf(sortedValues[i]);
-      const nextIndex = valueOrder.indexOf(sortedValues[i + 1]);
-      if (nextIndex !== currentIndex + 1) return false;
-    }
+    // Check if consecutive (including wrap-around: K follows 10, J follows Q, Q follows K)
+    const isConsecutive = (a: number, b: number): boolean => {
+      return b - a === 1;
+    };
     
-    return true;
+    return isConsecutive(singleIndexes[0], singleIndexes[1]);
   }
 
   static drawCardNjuga(gameState: NjugaGameState, playerId: string, fromDiscard: boolean = false): Card | null {
@@ -123,13 +137,23 @@ export class GameLogic {
       guesses[playerId] = [];
     });
     
+    // Random starting player
+    const randomStartIndex = Math.floor(Math.random() * playerIds.length);
+    
     return {
       playerGrids,
       moneyPlacements,
       guesses,
-      currentTurn: playerIds[0],
+      currentTurn: playerIds[randomStartIndex],
       hasWinner: false
     };
+  }
+
+  static getChipSplit(stakes: number): number[] {
+    // Base chip split for K50: [20, 10, 10, 5, 5]
+    const baseChips = [20, 10, 10, 5, 5];
+    const multiplier = stakes / 50;
+    return baseChips.map(chip => chip * multiplier);
   }
 
   static placeMoneyShansha(gameState: ShanshaGameState, playerId: string, x: number, y: number, amount: number): boolean {

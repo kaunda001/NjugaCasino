@@ -90,30 +90,56 @@ export default function NjugaRoom({ room, onLeave }: NjugaRoomProps) {
     }
   };
 
-  const handleDrawCard = (fromDiscard: boolean = false) => {
+  const handleDrawCard = () => {
     if (socket && user && isMyTurn) {
       socket.send(JSON.stringify({
         type: 'gameAction',
         data: { 
           roomId: room.id, 
           action: 'draw',
-          data: { fromDiscard }
+          data: { fromDiscard: false }
         }
       }));
     }
   };
 
-  const handleDiscardCard = (cardId: string) => {
+  const handleClaimCard = () => {
+    if (socket && user && isMyTurn && gameState?.discardPile.length > 0) {
+      socket.send(JSON.stringify({
+        type: 'gameAction',
+        data: { 
+          roomId: room.id, 
+          action: 'draw',
+          data: { fromDiscard: true }
+        }
+      }));
+    }
+  };
+
+  const handleDiscardCard = () => {
     if (socket && user && isMyTurn && selectedCard) {
       socket.send(JSON.stringify({
         type: 'gameAction',
         data: { 
           roomId: room.id, 
           action: 'discard',
-          data: { cardId }
+          data: { cardId: selectedCard }
         }
       }));
       setSelectedCard(null);
+    }
+  };
+
+  const handleWin = () => {
+    if (socket && user && isMyTurn && hasWinningHand) {
+      socket.send(JSON.stringify({
+        type: 'gameAction',
+        data: { 
+          roomId: room.id, 
+          action: 'win',
+          data: {}
+        }
+      }));
     }
   };
 
@@ -248,27 +274,39 @@ export default function NjugaRoom({ room, onLeave }: NjugaRoomProps) {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-3">
                     <Button
-                      onClick={() => handleDrawCard(false)}
-                      disabled={!isMyTurn}
-                      variant="outline"
-                    >
-                      Draw from Deck
-                    </Button>
-                    <Button
-                      onClick={() => handleDrawCard(true)}
+                      onClick={handleClaimCard}
                       disabled={!isMyTurn || !gameState?.discardPile.length}
                       variant="outline"
+                      size="sm"
                     >
-                      Draw from Discard
+                      Claim Card
                     </Button>
                     <Button
-                      onClick={() => selectedCard && handleDiscardCard(selectedCard)}
+                      onClick={handleDrawCard}
+                      disabled={!isMyTurn}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Draw Card
+                    </Button>
+                    <Button
+                      onClick={handleDiscardCard}
                       disabled={!isMyTurn || !selectedCard}
                       variant="default"
+                      size="sm"
                     >
-                      Discard Selected
+                      Discard Card
+                    </Button>
+                    <Button
+                      onClick={handleWin}
+                      disabled={!isMyTurn || !hasWinningHand}
+                      variant="default"
+                      className="bg-green-600 hover:bg-green-700"
+                      size="sm"
+                    >
+                      Win
                     </Button>
                     <Button
                       onClick={handleForfeit}
@@ -306,15 +344,24 @@ export default function NjugaRoom({ room, onLeave }: NjugaRoomProps) {
               </CardContent>
             </Card>
 
-            {/* Discard Pile */}
-            {gameStarted && gameState?.discardPile.length > 0 && (
+            {/* Discard Pile - Top of Layout */}
+            {gameStarted && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Discard Pile</CardTitle>
+                  <CardTitle className="flex items-center justify-center">
+                    <span className="mr-2">🗑️</span>
+                    Discard Pile (Top)
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex justify-center">
-                    {renderCard(gameState.discardPile[gameState.discardPile.length - 1])}
+                    {gameState?.discardPile.length > 0 ? (
+                      renderCard(gameState.discardPile[gameState.discardPile.length - 1])
+                    ) : (
+                      <div className="w-16 h-24 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
+                        <span className="text-gray-400 text-xs">Empty</span>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

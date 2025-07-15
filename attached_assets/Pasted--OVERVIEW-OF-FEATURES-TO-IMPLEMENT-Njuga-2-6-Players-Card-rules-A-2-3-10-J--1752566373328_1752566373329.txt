@@ -1,0 +1,232 @@
+
+✅ OVERVIEW OF FEATURES TO IMPLEMENT
+🎴 Njuga (2–6 Players)
+Card rules: A → 2 → 3 → ... → 10 → J → Q → K (and 10 follows J, J follows Q, Q follows K)
+
+Win condition: 4 cards = 1 pair + 2 followers
+
+Buttons:
+
+Claim Card (top of discard pile)
+
+Draw Card
+
+Discard Card
+
+Win (enabled when hand is valid)
+
+Forfeit
+
+Turn logic:
+
+Random start
+
+Clockwise turns
+
+20 seconds per turn
+
+Turn ends if player discards or wins
+
+🧠 Shansha (2 Players)
+Board: 4x6 grid per player (unique per player)
+
+Betting rooms: K50 to K5000
+
+Chip split: K50 → [20, 10, 10, 5, 5]
+
+Turns:
+
+Random start
+
+Player guesses grid
+
+If it contains money: money captured → redistributed among your active cells
+
+If empty: tile still marked
+
+20s per turn
+
+Ends when one player loses all chips or all tiles are guessed
+
+Captured money is not credited to balance until the game is won
+
+Forfeit logic:
+
+Forfeiting player: 80% back
+
+Other player: 15%
+
+House: 5%
+
+♟️ Chishingwa (Checkers, 2 Players)
+Board: 8x8 (Brazilian rules)
+
+Kings can move any distance (long moves)
+
+Backward captures allowed
+
+Must capture the maximum number of pieces
+
+Turns:
+
+Random starter
+
+Red or black chips assigned
+
+20 seconds per move
+
+Forfeit logic:
+
+Same as Shansha
+
+💻 LOBBY UI
+✅ Display betting rooms
+Njuga lobby: List all rooms (K5, K10, K50, K100, K200, K500, K1000, K5000)
+
+Shansha rooms : Show only K50, K100, K200, K500, K1000, K5000
+
+Chishingwa rooms: Show K50, K100, K200, K500, K1000, K5000
+
+Each room card should:
+
+Show number of players
+
+Entry fee
+
+A “Join” button (disabled if room is full)
+
+🧠 ROOM & SESSION MANAGEMENT (All Games)
+✅ Room Rules:
+Njuga: Starts with 2+, max 6. New room created after game start
+
+Shansha: Starts with 2 only
+
+Chishingwa: Starts with 2 only
+
+✅ After game start:
+Lock the current room
+
+Create a new waiting room of the same type/amount
+
+Players should not rejoin a finished room
+
+✅ Session Tracking:
+Maintain a session table per game
+
+Track:
+
+Player ID
+
+Room ID
+
+Socket ID
+
+Last heartbeat timestamp
+
+Kick ghosts after 1 minute of inactivity
+
+🕹️ GAME UI SPECIFICS
+🎴 Njuga Game UI (client/pages/njuga-room.tsx)
+Layout:
+
+diff
+Copy
+Edit
++------------------------+
+| 🗑️ Discard Pile (Top)  |
++------------------------+
+| 🂠 🂡 🂢 Player's Hand     |
++------------------------+
+| [Claim] [Draw] [Discard] |
+| [Win]   [Forfeit]        |
++------------------------+
+All buttons only active on player’s turn
+
+Win button is active only if hand is valid
+
+Show toast “You Start” to first player
+
+🧩 Shansha Game UI (client/pages/shansha-room.tsx)
+Each player sees their own grid (4x6)
+
+Chips placed manually before game starts
+
+Once both players click Ready, system starts game
+
+Random player starts
+
+When player guesses a tile:
+
+If it has money:
+
+Highlight cell (green border)
+
+Capture amount → split to remaining cells with money
+
+If empty:
+
+Highlight cell (gray border)
+
+Grid is visible to both players
+
+Players cannot guess on already clicked tiles
+
+Captured amounts only go to balance if player wins
+
+♟️ Chishingwa (client/pages/chishingwa-room.tsx)
+Use 8x8 board with highlighted diagonal cells
+
+Moves:
+
+Kings: can move any number of spaces
+
+Back captures allowed
+
+Must capture the most possible pieces
+
+Red/black assigned randomly
+
+20s per turn
+
+💸 BETTING + PAYOUTS (all handled by server)
+Njuga:
+House takes 15% of the pot
+
+Winner gets 85%
+
+Forfeit:
+
+20% of player pot → house
+
+Player leaves with 80%
+
+Shansha & Chishingwa:
+House takes 15%
+
+Winner gets 85%
+
+Forfeit:
+
+5% → house
+
+15% → other player
+
+80% → forfeiting player
+
+🔁 TURN MANAGEMENT
+Turn starts → 20s timer
+
+If no action in time, auto-forfeit or skip
+
+Next player in clockwise order
+
+Starter is randomly chosen and notified via popup
+
+✅ FILES/COMPONENTS TO UPDATE
+File	Responsibility
+RoomManager.ts	Track active rooms, connections
+WebSocket server	Broadcasts events: join, start, move, disconnect
+client/pages/njuga-room.tsx	Card logic, turns, discard pile UI
+client/pages/shansha-room.tsx	Grid UI, chip logic, capture mechanics
+client/pages/chishingwa-room.tsx	Checkers logic, board rendering
+client/pages/lobby.tsx	Display all betting rooms dynamically

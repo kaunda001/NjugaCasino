@@ -28,7 +28,17 @@ export default function ShanshaRoom({ room, onLeave }: ShanshaRoomProps) {
   const [chipsPlaced, setChipsPlaced] = useState(false);
   const [selectedChip, setSelectedChip] = useState<number | null>(null);
   const [myGrid, setMyGrid] = useState<(number | null)[][]>(Array(4).fill(null).map(() => Array(6).fill(null)));
-  const [chipValues] = useState<number[]>([20, 10, 10, 5, 5]); // For K50 room
+  const [placedChips, setPlacedChips] = useState<number[]>([]);
+  const [capturedAmounts, setCapturedAmounts] = useState<number[]>([]);
+  
+  // Calculate chip values based on room stakes
+  const getChipValues = (stakes: number) => {
+    const baseChips = [20, 10, 10, 5, 5];
+    const multiplier = stakes / 50;
+    return baseChips.map(chip => chip * multiplier);
+  };
+  
+  const chipValues = getChipValues(room.stakes);
 
   useEffect(() => {
     if (socket && user) {
@@ -82,17 +92,19 @@ export default function ShanshaRoom({ room, onLeave }: ShanshaRoomProps) {
   };
 
   const handleChipPlacement = (row: number, col: number) => {
-    if (selectedChip !== null && !gameStarted) {
+    if (selectedChip !== null && !gameStarted && myGrid[row][col] === null) {
       const newGrid = [...myGrid];
-      newGrid[row][col] = chipValues[selectedChip];
+      const chipValue = chipValues[selectedChip];
+      newGrid[row][col] = chipValue;
       setMyGrid(newGrid);
       
-      // Remove the placed chip from available chips
+      // Track placed chips
+      const newPlacedChips = [...placedChips, selectedChip];
+      setPlacedChips(newPlacedChips);
       setSelectedChip(null);
       
       // Check if all chips are placed
-      const placedChips = myGrid.flat().filter(cell => cell !== null).length;
-      if (placedChips === 4) { // 5 chips total - 1 just placed
+      if (newPlacedChips.length === 5) {
         setChipsPlaced(true);
         
         // Send chip placement to server
@@ -136,15 +148,20 @@ export default function ShanshaRoom({ room, onLeave }: ShanshaRoomProps) {
 
   const renderGrid = (isMyGrid: boolean) => {
     const grid = isMyGrid ? myGrid : Array(4).fill(null).map(() => Array(6).fill(null));
-    const guesses = gameState?.guesses?.[user?.id?.toString() || ''] || [];
+    const myGuesses = gameState?.guesses?.[user?.id?.toString() || ''] || [];
+    const opponentId = room.players.find(p => p.userId !== user?.id)?.id;
+    const opponentGuesses = gameState?.guesses?.[opponentId || ''] || [];
     
     return (
       <div className="grid grid-cols-6 gap-1 p-4 bg-gray-100 dark:bg-gray-800 rounded-lg">
         {grid.map((row, rowIndex) =>
           row.map((cell, colIndex) => {
-            const guess = guesses.find(g => g.x === colIndex && g.y === rowIndex);
-            const isGuessed = guess !== undefined;
-            const isHit = guess?.hit || false;
+            const myGuess = myGuesses.find(g => g.x === colIndex && g.y === rowIndex);
+            const opponentGuess = opponentGuesses.find(g => g.x === colIndex && g.y === rowIndex);
+            const isGuessedByMe = myGuess !== undefined;
+            const isGuessedByOpponent = opponentGuess !== undefined;
+            const isHitByMe = myGuess?.hit || false;
+            const isHitByOpponent = opponentGuess?.hit || false;
             const hasChip = cell !== null;
             
             return (
@@ -153,16 +170,18 @@ export default function ShanshaRoom({ room, onLeave }: ShanshaRoomProps) {
                 className={`
                   w-12 h-12 border-2 rounded-lg flex items-center justify-center cursor-pointer
                   transition-all duration-200 text-xs font-bold
-                  ${isMyGrid && !gameStarted ? 'hover:bg-blue-100 dark:hover:bg-blue-900' : ''}
+                  ${isMyGrid && !gameStarted && selectedChip !== null ? 'hover:bg-blue-100 dark:hover:bg-blue-900' : ''}
                   ${isMyGrid && hasChip ? 'bg-green-200 dark:bg-green-800 border-green-400' : 'bg-white dark:bg-gray-700 border-gray-300'}
-                  ${!isMyGrid && isGuessed && isHit ? 'bg-green-500 border-green-600 text-white' : ''}
-                  ${!isMyGrid && isGuessed && !isHit ? 'bg-red-500 border-red-600 text-white' : ''}
-                  ${!isMyGrid && !isGuessed && gameStarted && isMyTurn ? 'hover:bg-blue-100 dark:hover:bg-blue-900' : ''}
+                  ${isMyGrid && isGuessedByOpponent && isHitByOpponent ? 'border-red-500 bg-red-100 dark:bg-red-900' : ''}
+                  ${isMyGrid && isGuessedByOpponent && !isHitByOpponent ? 'border-gray-500 bg-gray-100 dark:bg-gray-800' : ''}
+                  ${!isMyGrid && isGuessedByMe && isHitByMe ? 'bg-green-500 border-green-600 text-white' : ''}
+                  ${!isMyGrid && isGuessedByMe && !isHitByMe ? 'bg-red-500 border-red-600 text-white' : ''}
+                  ${!isMyGrid && !isGuessedByMe && gameStarted && isMyTurn ? 'hover:bg-blue-100 dark:hover:bg-blue-900' : ''}
                 `}
                 onClick={() => {
-                  if (isMyGrid && !gameStarted) {
+                  if (isMyGrid && !gameStarted && selectedChip !== null) {
                     handleChipPlacement(rowIndex, colIndex);
-                  } else if (!isMyGrid && !isGuessed && gameStarted && isMyTurn) {
+                  } else if (!isMyGrid && !isGuessedByMe && gameStarted && isMyTurn) {
                     handleGuess(rowIndex, colIndex);
                   }
                 }}
@@ -172,9 +191,9 @@ export default function ShanshaRoom({ room, onLeave }: ShanshaRoomProps) {
                     K{cell}
                   </span>
                 )}
-                {!isMyGrid && isGuessed && (
+                {!isMyGrid && isGuessedByMe && (
                   <span className="text-white">
-                    {isHit ? '✓' : '✗'}
+                    {isHitByMe ? '✓' : '✗'}
                   </span>
                 )}
               </div>
@@ -185,10 +204,7 @@ export default function ShanshaRoom({ room, onLeave }: ShanshaRoomProps) {
     );
   };
 
-  const availableChips = chipValues.filter((_, index) => {
-    const placedCount = myGrid.flat().filter(cell => cell === chipValues[index]).length;
-    return placedCount === 0;
-  });
+  const availableChips = chipValues.filter((_, index) => !placedChips.includes(index));
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 to-green-100 dark:from-gray-900 dark:to-gray-800 p-4">
