@@ -19,6 +19,18 @@ export default function ShanshaRoom({ room, onLeave }: ShanshaRoomProps) {
   const { user } = useAuth();
   const { socket } = useSocket();
   const { toast } = useToast();
+
+  // Early return if user is not loaded
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-white text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white mx-auto mb-4"></div>
+          <p>Loading user data...</p>
+        </div>
+      </div>
+    );
+  }
   
   const [gameState, setGameState] = useState<ShanshaGameState | null>(null);
   const [timeLeft, setTimeLeft] = useState(20);
@@ -53,7 +65,7 @@ export default function ShanshaRoom({ room, onLeave }: ShanshaRoomProps) {
         switch (message.type) {
           case 'gameState':
             setGameState(message.data);
-            setIsMyTurn(message.data.currentTurn === user.id.toString());
+            setIsMyTurn(message.data.currentTurn === user?.id?.toString());
             setGameStarted(true);
             break;
           case 'turnTimer':
@@ -61,7 +73,7 @@ export default function ShanshaRoom({ room, onLeave }: ShanshaRoomProps) {
             break;
           case 'gameWinner':
             setGameStarted(false);
-            if (message.data.winnerId === user.id.toString()) {
+            if (message.data.winnerId === user?.id?.toString()) {
               toast({
                 title: '🎉 Congratulations!',
                 description: `You won K${message.data.winnings}!`,
@@ -69,7 +81,7 @@ export default function ShanshaRoom({ room, onLeave }: ShanshaRoomProps) {
             }
             break;
           case 'chipPlacement':
-            if (message.data.playerId === user.id.toString()) {
+            if (message.data.playerId === user?.id?.toString()) {
               setChipsPlaced(true);
             }
             break;

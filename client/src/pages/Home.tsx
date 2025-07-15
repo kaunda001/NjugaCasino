@@ -301,7 +301,7 @@ export default function Home() {
               <div className="space-y-4">
                 {leaderboardData?.leaderboard?.length > 0 ? (
                   leaderboardData.leaderboard.map((entry: any, index: number) => (
-                    <div key={entry.user.id} className="flex items-center justify-between p-4 bg-slate-900 rounded-lg">
+                    <div key={entry.user?.id || index} className="flex items-center justify-between p-4 bg-slate-900 rounded-lg">
                       <div className="flex items-center space-x-4">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${
                           index === 0 ? 'bg-yellow-500 text-slate-900' :

@@ -22,18 +22,30 @@ export function GameRoom({ room, onLeave }: GameRoomProps) {
   const { toast } = useToast();
   const [gameTimer, setGameTimer] = useState(0);
 
+  // Early return if user is not loaded
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-white text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white mx-auto mb-4"></div>
+          <p>Loading user data...</p>
+        </div>
+      </div>
+    );
+  }
+
   const currentPlayer = room.players.find(p => p.userId === user?.id);
   const isMyTurn = room.gameState && (room.gameState as any).currentTurn === user?.id.toString();
 
   const handleLeave = () => {
-    if (user) {
+    if (user?.id) {
       leaveRoom(user.id, room.id);
     }
     onLeave();
   };
 
   const handleToggleReady = () => {
-    if (user) {
+    if (user?.id) {
       toggleReady(user.id, room.id);
     }
   };

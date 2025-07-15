@@ -83,7 +83,9 @@ export function RoomModal({ isOpen, onClose, gameType }: RoomModalProps) {
 
     try {
       await apiRequest('POST', `/api/rooms/${room.id}/join`, { stakes: room.stakes });
-      joinRoom(user.id, room.id, room.stakes);
+      if (user?.id) {
+        joinRoom(user.id, room.id, room.stakes);
+      }
       onClose();
     } catch (error) {
       toast({

@@ -1,0 +1,112 @@
+The error you're seeing:
+
+javascript
+Copy
+Edit
+Uncaught TypeError: Cannot read properties of undefined (reading 'id')
+means that somewhere in your React (likely TypeScript or JSX) code, you're trying to access .id on a variable that is undefined. The stack trace points to:
+
+java
+Copy
+Edit
+at wL (index-Cu2j9EAH.js:297:1350)
+This is a minified production bundle, so line numbers won’t help unless we know what wL is. However, the pattern is clear:
+
+✅ What’s Likely Happening:
+You're doing something like this:
+
+ts
+Copy
+Edit
+const socket = useGameWebSocket(user.id); // ❌
+but user is still undefined at the time.
+
+✅ Fix Option 1: Defensive Check Before Accessing .id
+Make sure the user exists before accessing user.id:
+
+ts
+Copy
+Edit
+const userId = user?.id ?? null; // Use optional chaining
+Then only proceed with room joining logic if userId is not null:
+
+ts
+Copy
+Edit
+useEffect(() => {
+  if (!userId || !roomId) return;
+
+  socket.send("join_njuga_room", { roomId, userId });
+}, [userId, roomId, socket]);
+✅ Fix Option 2: Add Early Return Until user Is Ready
+If you're in a useEffect or render function, do this:
+
+ts
+Copy
+Edit
+if (!user) {
+  return <div>Loading...</div>; // or navigate('/login')
+}
+✅ Fix Option 3: Add a Loading Guard
+Before rendering your component or doing WebSocket setup:
+
+tsx
+Copy
+Edit
+if (!user || !socket || !roomId) {
+  return null; // or return a loading spinner
+}
+✅ Suggested Code Pattern for Room Join (Cleaned Up)
+ts
+Copy
+Edit
+useEffect(() => {
+  if (!user || !socket || !roomId) return;
+
+  // Join Room
+  socket.send("join_njuga_room", {
+    roomId,
+    userId: user.id,
+  });
+
+  // Set up WebSocket handlers
+  socket.onMessage("room_joined", (data) => {
+    console.log("Joined room:", data.roomId);
+    setRoomData(data);
+  });
+
+  return () => {
+    socket.send("leave_njuga_room", {
+      roomId,
+      userId: user.id,
+    });
+  };
+}, [user, roomId, socket]);
+✅ Replit RoomManager Server Logic (Simplified)
+On the backend, your RoomManager.ts should verify user presence before room assignment:
+
+ts
+Copy
+Edit
+function joinRoom(roomId: string, userId: number, socket: WebSocket) {
+  if (!userId || !roomId || !socket) {
+    console.error("❌ Invalid join request:", { roomId, userId });
+    return;
+  }
+
+  const room = getOrCreateRoom(roomId);
+
+  // Avoid duplicate join
+  if (!room.players.includes(userId)) {
+    room.players.push(userId);
+  }
+
+  room.sockets[userId] = socket;
+  broadcastRoomState(roomId);
+}
+✅ Summary of Fixes
+Fix	Needed For
+user?.id ?? null	Prevent accessing .id of undefined
+if (!user) return;	Avoid rendering when user is missing
+WebSocket connection guards	Prevent sending messages with missing data
+Backend: Validate userId	Avoid undefined users entering rooms

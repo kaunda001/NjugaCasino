@@ -28,8 +28,20 @@ export default function NjugaRoom({ room, onLeave }: NjugaRoomProps) {
   const [gameStarted, setGameStarted] = useState(false);
   const [winner, setWinner] = useState<string | null>(null);
 
+  // Early return if user is not loaded
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-white text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-white mx-auto mb-4"></div>
+          <p>Loading user data...</p>
+        </div>
+      </div>
+    );
+  }
+
   useEffect(() => {
-    if (socket && user) {
+    if (socket && user?.id) {
       socket.send(JSON.stringify({
         type: 'joinRoom',
         data: { roomId: room.id, stakes: room.stakes }
@@ -41,7 +53,7 @@ export default function NjugaRoom({ room, onLeave }: NjugaRoomProps) {
         switch (message.type) {
           case 'gameState':
             setGameState(message.data);
-            setIsMyTurn(message.data.currentTurn === user.id.toString());
+            setIsMyTurn(message.data.currentTurn === user?.id?.toString());
             setGameStarted(true);
             break;
           case 'turnTimer':
@@ -50,7 +62,7 @@ export default function NjugaRoom({ room, onLeave }: NjugaRoomProps) {
           case 'gameWinner':
             setWinner(message.data.winnerId);
             setGameStarted(false);
-            if (message.data.winnerId === user.id.toString()) {
+            if (message.data.winnerId === user?.id?.toString()) {
               toast({
                 title: '🎉 Congratulations!',
                 description: `You won K${message.data.winnings}!`,
@@ -65,7 +77,7 @@ export default function NjugaRoom({ room, onLeave }: NjugaRoomProps) {
             break;
           case 'gameStarted':
             setGameStarted(true);
-            if (message.data.starterId === user.id.toString()) {
+            if (message.data.starterId === user?.id?.toString()) {
               toast({
                 title: '🎉 You start!',
                 description: 'Make your first move',
