@@ -150,7 +150,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/rooms', authenticateToken, async (req, res) => {
+  app.post('/api/rooms/join', authenticateToken, async (req, res) => {
     try {
       const { gameType, stakes } = req.body;
       
@@ -158,11 +158,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Game type and stakes required' });
       }
       
-      const roomId = await roomManager.createRoom(gameType, stakes);
-      res.json({ roomId });
+      const success = await roomManager.joinRoom(req.user.id, gameType, stakes);
+      
+      if (success) {
+        res.json({ message: 'Joined room successfully' });
+      } else {
+        res.status(400).json({ message: 'Unable to join room' });
+      }
     } catch (error) {
-      console.error('Error creating room:', error);
-      res.status(500).json({ message: 'Failed to create room' });
+      console.error('Error joining room:', error);
+      res.status(500).json({ message: 'Failed to join room' });
     }
   });
 
@@ -250,9 +255,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             break;
             
           case 'joinRoom':
-            const success = await roomManager.joinRoom(data.userId, data.roomId, data.stakes);
+            const success = await roomManager.joinRoom(data.userId, data.gameType, data.stakes);
             if (success) {
-              ws.send(JSON.stringify({ type: 'roomJoined', roomId: data.roomId }));
+              ws.send(JSON.stringify({ type: 'roomJoined' }));
             } else {
               ws.send(JSON.stringify({ type: 'error', message: 'Failed to join room' }));
             }

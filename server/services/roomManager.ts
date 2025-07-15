@@ -63,14 +63,17 @@ export class RoomManager {
     }
   }
 
-  async joinRoom(userId: number, roomId: number, stakes: number): Promise<boolean> {
-    const room = await storage.getRoom(roomId);
-    if (!room || room.currentPlayers >= room.maxPlayers || room.status !== 'waiting') {
+  async joinRoom(userId: number, gameType: GameType, stakes: number): Promise<boolean> {
+    const user = await storage.getUser(userId);
+    if (!user || user.balance < stakes) {
       return false;
     }
 
-    const user = await storage.getUser(userId);
-    if (!user || user.balance < stakes) {
+    // Find or create appropriate room
+    const roomId = await this.findOrCreateRoom(gameType, stakes);
+    const room = await storage.getRoom(roomId);
+    
+    if (!room || room.currentPlayers >= room.maxPlayers || room.status !== 'waiting') {
       return false;
     }
 
@@ -100,11 +103,8 @@ export class RoomManager {
 
     await this.notifyRoomUpdate(roomId);
     
-    // Check if room is full and start game
-    const updatedRoom = await storage.getRoom(roomId);
-    if (updatedRoom && updatedRoom.currentPlayers >= 2) {
-      await this.checkStartGame(roomId);
-    }
+    // Check if room is ready to start
+    await this.checkStartGame(roomId);
 
     return true;
   }
@@ -152,11 +152,18 @@ export class RoomManager {
     
     if (!room || room.status !== 'waiting') return;
     
-    const readyPlayers = roomPlayers.filter(p => p.isReady && p.isConnected);
-    const minPlayers = room.gameType === 'njuga' ? 2 : 2;
-    
-    if (readyPlayers.length >= minPlayers && readyPlayers.length === roomPlayers.length) {
+    // Auto-start conditions based on game type
+    const shouldStart = room.gameType === 'njuga' 
+      ? roomPlayers.length >= 2  // Njuga: 2+ players can start
+      : roomPlayers.length === 2; // Shansha/Chinshingwa: exactly 2 players
+
+    if (shouldStart) {
       await this.startGame(roomId);
+      
+      // Create new room for additional players if current room is full
+      if (roomPlayers.length >= room.maxPlayers) {
+        await this.findOrCreateRoom(room.gameType, room.stakes);
+      }
     }
   }
 
@@ -417,7 +424,20 @@ export class RoomManager {
     };
   }
 
-  async createRoom(gameType: GameType, stakes: number): Promise<number> {
+  async findOrCreateRoom(gameType: GameType, stakes: number): Promise<number> {
+    // Find existing room that's not full
+    const existingRooms = await storage.getRoomsByGameType(gameType);
+    const availableRoom = existingRooms.find(room => 
+      room.stakes === stakes && 
+      room.status === 'waiting' &&
+      room.currentPlayers < room.maxPlayers
+    );
+    
+    if (availableRoom) {
+      return availableRoom.id;
+    }
+    
+    // Create new room if none available
     const maxPlayers = gameType === 'njuga' ? 6 : 2;
     const room = await storage.createRoom({
       name: `${gameType.charAt(0).toUpperCase() + gameType.slice(1)} Room`,

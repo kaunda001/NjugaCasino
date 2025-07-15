@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useSocket } from '@/hooks/useSocket';
 import { AuthModal } from '@/components/AuthModal';
-import { RoomModal } from '@/components/RoomModal';
+import { GameJoinModal } from '@/components/GameJoinModal';
 import { GameRoom } from '@/components/GameRoom';
 import { GameType } from '@shared/schema';
 import { 
@@ -26,7 +26,7 @@ export default function Home() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const { currentRoom } = useSocket();
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [showRoomModal, setShowRoomModal] = useState(false);
+  const [showGameJoinModal, setShowGameJoinModal] = useState(false);
   const [selectedGameType, setSelectedGameType] = useState<GameType | undefined>();
 
   const { data: leaderboardData } = useQuery({
@@ -40,7 +40,7 @@ export default function Home() {
       return;
     }
     setSelectedGameType(gameType);
-    setShowRoomModal(true);
+    setShowGameJoinModal(true);
   };
 
   const handleJoinRoom = () => {
@@ -49,7 +49,7 @@ export default function Home() {
       return;
     }
     setSelectedGameType(undefined);
-    setShowRoomModal(true);
+    setShowGameJoinModal(true);
   };
 
   // If user is in a room, show the game room
@@ -396,9 +396,9 @@ export default function Home() {
         onClose={() => setShowAuthModal(false)} 
       />
       
-      <RoomModal 
-        isOpen={showRoomModal} 
-        onClose={() => setShowRoomModal(false)}
+      <GameJoinModal 
+        isOpen={showGameJoinModal} 
+        onClose={() => setShowGameJoinModal(false)}
         gameType={selectedGameType}
       />
     </div>

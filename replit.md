@@ -10,15 +10,16 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-### Game Implementation (July 15, 2025)
-- Created three complete game rooms with full specifications:
-  - **Njuga**: 2-6 players, card game with pairs and followers (K5-K5000 stakes)
-  - **Shansha**: 2 players, grid-based chip placement strategy game (K50-K5000 stakes)
-  - **Chinshingwa**: 2 players, Brazilian checkers variant (K50-K5000 stakes)
-- Enhanced dashboard with beautiful animated game tiles
-- Fixed authentication issues with API requests
-- Added proper routing for all game rooms
-- Implemented complete game UI with rules, timers, and player management
+### Auto-Room Management System (July 15, 2025)
+- **Removed manual room creation**: Players no longer create rooms manually
+- **Implemented auto-room discovery**: System automatically finds available rooms or creates new ones
+- **Simplified user flow**: Players select game type and stakes, then automatically join appropriate room
+- **Smart room allocation**: 
+  - Njuga: Auto-starts with 2+ players (up to 6), creates new rooms when full
+  - Shansha/Chinshingwa: Auto-starts with exactly 2 players, immediately creates new rooms
+- **Updated UI components**: Replaced RoomModal with GameJoinModal for streamlined experience
+- **Enhanced backend logic**: Modified RoomManager to handle automatic room finding and creation
+- **Improved WebSocket integration**: Updated join room messages to use game type instead of room ID
 
 ## System Architecture
 

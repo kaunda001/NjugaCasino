@@ -10,7 +10,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useLocation } from 'wouter';
 import { useToast } from '@/hooks/use-toast';
-import { RoomModal } from '@/components/RoomModal';
+import { GameJoinModal } from '@/components/GameJoinModal';
 import { GameRoom } from '@/components/GameRoom';
 import { WalletModal } from '@/components/WalletModal';
 import { ProfileModal } from '@/components/ProfileModal';
@@ -19,7 +19,7 @@ import { GameType, RoomInfo } from '@shared/schema';
 export default function Dashboard() {
   const { user, signOut } = useAuth();
   const [selectedRoom, setSelectedRoom] = useState<RoomInfo | null>(null);
-  const [showRoomModal, setShowRoomModal] = useState(false);
+  const [showGameJoinModal, setShowGameJoinModal] = useState(false);
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [selectedGameType, setSelectedGameType] = useState<GameType | undefined>();
@@ -46,27 +46,27 @@ export default function Dashboard() {
     setSelectedRoom(null);
   };
 
-  const handleCreateRoom = (gameType: GameType) => {
+  const handleJoinGame = (gameType: GameType) => {
     setSelectedGameType(gameType);
-    setShowRoomModal(true);
+    setShowGameJoinModal(true);
   };
 
-  const createRoomMutation = useMutation({
+  const joinGameMutation = useMutation({
     mutationFn: async (data: { gameType: GameType; stakes: number }) => {
-      const res = await apiRequest('POST', '/api/rooms', data);
+      const res = await apiRequest('POST', '/api/rooms/join', data);
       return res.json();
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['/api/rooms'] });
-      setShowRoomModal(false);
+      setShowGameJoinModal(false);
       
       // Navigate to appropriate game room
-      if (data.gameType === 'njuga') {
-        navigate('/njuga-room', { state: { room: data } });
-      } else if (data.gameType === 'shansha') {
-        navigate('/shansha-room', { state: { room: data } });
-      } else if (data.gameType === 'chinshingwa') {
-        navigate('/chinshingwa-room', { state: { room: data } });
+      if (selectedGameType === 'njuga') {
+        navigate('/njuga-room');
+      } else if (selectedGameType === 'shansha') {
+        navigate('/shansha-room');
+      } else if (selectedGameType === 'chinshingwa') {
+        navigate('/chinshingwa-room');
       }
     },
     onError: (error) => {
@@ -221,12 +221,11 @@ export default function Dashboard() {
                                     {room ? `${room.currentPlayers}/${room.maxPlayers}` : '0/6'} players
                                   </div>
                                   <Button 
-                                    onClick={() => room ? handleJoinRoom(room) : createRoomMutation.mutate({ gameType: 'njuga', stakes })}
-                                    disabled={room && room.currentPlayers >= room.maxPlayers}
+                                    onClick={() => handleJoinGame('njuga')}
                                     size="sm"
                                     className="w-full"
                                   >
-                                    {room ? 'Join' : 'Create'}
+                                    Join Game
                                   </Button>
                                 </div>
                               </Card>
@@ -251,12 +250,11 @@ export default function Dashboard() {
                                     {room ? `${room.currentPlayers}/${room.maxPlayers}` : '0/2'} players
                                   </div>
                                   <Button 
-                                    onClick={() => room ? handleJoinRoom(room) : createRoomMutation.mutate({ gameType: 'shansha', stakes })}
-                                    disabled={room && room.currentPlayers >= room.maxPlayers}
+                                    onClick={() => handleJoinGame('shansha')}
                                     size="sm"
                                     className="w-full"
                                   >
-                                    {room ? 'Join' : 'Create'}
+                                    Join Game
                                   </Button>
                                 </div>
                               </Card>
@@ -281,12 +279,11 @@ export default function Dashboard() {
                                     {room ? `${room.currentPlayers}/${room.maxPlayers}` : '0/2'} players
                                   </div>
                                   <Button 
-                                    onClick={() => room ? handleJoinRoom(room) : createRoomMutation.mutate({ gameType: 'chinshingwa', stakes })}
-                                    disabled={room && room.currentPlayers >= room.maxPlayers}
+                                    onClick={() => handleJoinGame('chinshingwa')}
                                     size="sm"
                                     className="w-full"
                                   >
-                                    {room ? 'Join' : 'Create'}
+                                    Join Game
                                   </Button>
                                 </div>
                               </Card>
@@ -327,7 +324,7 @@ export default function Dashboard() {
                         </CardContent>
                       </Card>
                       
-                      <Card className="cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-300 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-800" onClick={() => handleCreateRoom('chinshingwa')}>
+                      <Card className="cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-300 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-800" onClick={() => handleJoinGame('chinshingwa')}>
                         <CardContent className="p-6 text-center">
                           <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                             <span className="text-3xl">♟️</span>
@@ -350,10 +347,10 @@ export default function Dashboard() {
       </div>
 
       {/* Modals */}
-      {showRoomModal && (
-        <RoomModal
-          isOpen={showRoomModal}
-          onClose={() => setShowRoomModal(false)}
+      {showGameJoinModal && (
+        <GameJoinModal
+          isOpen={showGameJoinModal}
+          onClose={() => setShowGameJoinModal(false)}
           gameType={selectedGameType}
         />
       )}

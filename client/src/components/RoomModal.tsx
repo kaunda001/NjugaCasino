@@ -35,27 +35,30 @@ const gameIcons = {
 
 export function RoomModal({ isOpen, onClose, gameType }: RoomModalProps) {
   const { user } = useAuth();
-  const { joinRoom } = useSocket();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [selectedStake, setSelectedStake] = useState(100);
 
-  const { data: roomsData, isLoading } = useQuery({
-    queryKey: ['/api/rooms'],
-    enabled: isOpen
-  });
-
-  const createRoomMutation = useMutation({
+  const joinRoomMutation = useMutation({
     mutationFn: async (data: { gameType: GameType; stakes: number }) => {
-      const response = await apiRequest('POST', '/api/rooms', data);
+      const response = await apiRequest('POST', '/api/rooms/join', data);
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/rooms'] });
-      if (user) {
-        joinRoom(user.id, data.roomId, selectedStake);
-      }
       onClose();
+      toast({
+        title: 'Success',
+        description: 'Joined game successfully!',
+        variant: 'default'
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to join game',
+        variant: 'destructive'
+      });
     }
   });
 
