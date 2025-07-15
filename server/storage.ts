@@ -1,5 +1,7 @@
 import { users, rooms, roomPlayers, gameHistory, type User, type InsertUser, type Room, type InsertRoom, type RoomPlayer, type InsertRoomPlayer, type GameHistory, type InsertGameHistory } from "@shared/schema";
 import bcrypt from 'bcrypt';
+import { db } from "./db";
+import { eq, and } from "drizzle-orm";
 
 export interface IStorage {
   // User operations
@@ -29,51 +31,31 @@ export interface IStorage {
   getLeaderboard(): Promise<{ user: User; stats: { wins: number; totalWinnings: number; gamesPlayed: number } }[]>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private rooms: Map<number, Room>;
-  private roomPlayers: Map<string, RoomPlayer>; // key: roomId-userId
-  private gameHistory: Map<number, GameHistory>;
-  private currentUserId: number;
-  private currentRoomId: number;
-  private currentRoomPlayerId: number;
-  private currentGameHistoryId: number;
-
-  constructor() {
-    this.users = new Map();
-    this.rooms = new Map();
-    this.roomPlayers = new Map();
-    this.gameHistory = new Map();
-    this.currentUserId = 1;
-    this.currentRoomId = 1;
-    this.currentRoomPlayerId = 1;
-    this.currentGameHistoryId = 1;
-  }
-
+export class DatabaseStorage implements IStorage {
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
   }
 
   async getUserByPhoneNumber(phoneNumber: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(user => user.phoneNumber === phoneNumber);
+    const [user] = await db.select().from(users).where(eq(users.phoneNumber, phoneNumber));
+    return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
     const hashedPassword = await bcrypt.hash(insertUser.password, 10);
-    const user: User = {
-      ...insertUser,
-      password: hashedPassword,
-      id,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    this.users.set(id, user);
+    const [user] = await db
+      .insert(users)
+      .values({
+        ...insertUser,
+        password: hashedPassword
+      })
+      .returning();
     return user;
   }
 
   async authenticateUser(phoneNumber: string, password: string): Promise<User | null> {
-    const user = Array.from(this.users.values()).find(user => user.phoneNumber === phoneNumber);
+    const [user] = await db.select().from(users).where(eq(users.phoneNumber, phoneNumber));
     if (!user) return null;
     
     const isValid = await bcrypt.compare(password, user.password);
@@ -81,119 +63,91 @@ export class MemStorage implements IStorage {
   }
 
   async updateUserBalance(userId: number, newBalance: number): Promise<void> {
-    const user = this.users.get(userId);
-    if (user) {
-      user.balance = newBalance;
-      user.updatedAt = new Date();
-      this.users.set(userId, user);
-    }
+    await db
+      .update(users)
+      .set({ balance: newBalance, updatedAt: new Date() })
+      .where(eq(users.id, userId));
   }
 
   async createRoom(insertRoom: InsertRoom): Promise<Room> {
-    const id = this.currentRoomId++;
-    const room: Room = {
-      ...insertRoom,
-      id,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    this.rooms.set(id, room);
+    const [room] = await db
+      .insert(rooms)
+      .values(insertRoom)
+      .returning();
     return room;
   }
 
   async getRoom(id: number): Promise<Room | undefined> {
-    return this.rooms.get(id);
+    const [room] = await db.select().from(rooms).where(eq(rooms.id, id));
+    return room || undefined;
   }
 
   async updateRoom(id: number, updates: Partial<Room>): Promise<void> {
-    const room = this.rooms.get(id);
-    if (room) {
-      Object.assign(room, updates);
-      room.updatedAt = new Date();
-      this.rooms.set(id, room);
-    }
+    await db
+      .update(rooms)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(rooms.id, id));
   }
 
   async getRoomsByGameType(gameType: string): Promise<Room[]> {
-    return Array.from(this.rooms.values()).filter(room => room.gameType === gameType);
+    return await db.select().from(rooms).where(eq(rooms.gameType, gameType));
   }
 
   async getAvailableRooms(): Promise<Room[]> {
-    return Array.from(this.rooms.values()).filter(room => 
-      room.status === 'waiting' && room.currentPlayers < room.maxPlayers
-    );
+    return await db.select().from(rooms).where(eq(rooms.status, 'waiting'));
   }
 
   async addPlayerToRoom(insertRoomPlayer: InsertRoomPlayer): Promise<RoomPlayer> {
-    const id = this.currentRoomPlayerId++;
-    const roomPlayer: RoomPlayer = {
-      ...insertRoomPlayer,
-      id,
-      joinedAt: new Date()
-    };
-    
-    const key = `${insertRoomPlayer.roomId}-${insertRoomPlayer.userId}`;
-    this.roomPlayers.set(key, roomPlayer);
-    
-    // Update room player count
-    const room = this.rooms.get(insertRoomPlayer.roomId!);
-    if (room) {
-      room.currentPlayers = (room.currentPlayers || 0) + 1;
-      room.updatedAt = new Date();
-      this.rooms.set(insertRoomPlayer.roomId!, room);
-    }
-    
+    const [roomPlayer] = await db
+      .insert(roomPlayers)
+      .values(insertRoomPlayer)
+      .returning();
     return roomPlayer;
   }
 
   async removePlayerFromRoom(roomId: number, userId: number): Promise<void> {
-    const key = `${roomId}-${userId}`;
-    this.roomPlayers.delete(key);
-    
-    // Update room player count
-    const room = this.rooms.get(roomId);
-    if (room) {
-      room.currentPlayers = Math.max(0, (room.currentPlayers || 0) - 1);
-      room.updatedAt = new Date();
-      this.rooms.set(roomId, room);
-    }
+    await db
+      .delete(roomPlayers)
+      .where(and(
+        eq(roomPlayers.roomId, roomId),
+        eq(roomPlayers.userId, userId)
+      ));
   }
 
   async getRoomPlayers(roomId: number): Promise<RoomPlayer[]> {
-    return Array.from(this.roomPlayers.values()).filter(player => player.roomId === roomId);
+    return await db.select().from(roomPlayers).where(eq(roomPlayers.roomId, roomId));
   }
 
   async updatePlayerReadyStatus(roomId: number, userId: number, isReady: boolean): Promise<void> {
-    const key = `${roomId}-${userId}`;
-    const player = this.roomPlayers.get(key);
-    if (player) {
-      player.isReady = isReady;
-      this.roomPlayers.set(key, player);
-    }
+    await db
+      .update(roomPlayers)
+      .set({ isReady })
+      .where(and(
+        eq(roomPlayers.roomId, roomId),
+        eq(roomPlayers.userId, userId)
+      ));
   }
 
   async updatePlayerConnection(roomId: number, userId: number, isConnected: boolean): Promise<void> {
-    const key = `${roomId}-${userId}`;
-    const player = this.roomPlayers.get(key);
-    if (player) {
-      player.isConnected = isConnected;
-      this.roomPlayers.set(key, player);
-    }
+    await db
+      .update(roomPlayers)
+      .set({ isConnected })
+      .where(and(
+        eq(roomPlayers.roomId, roomId),
+        eq(roomPlayers.userId, userId)
+      ));
   }
 
   async createGameHistory(insertHistory: InsertGameHistory): Promise<GameHistory> {
-    const id = this.currentGameHistoryId++;
-    const history: GameHistory = {
-      ...insertHistory,
-      id,
-      completedAt: new Date()
-    };
-    this.gameHistory.set(id, history);
+    const [history] = await db
+      .insert(gameHistory)
+      .values(insertHistory)
+      .returning();
     return history;
   }
 
   async getPlayerStats(userId: number): Promise<{ wins: number; totalWinnings: number; gamesPlayed: number }> {
-    const histories = Array.from(this.gameHistory.values());
+    const histories = await db.select().from(gameHistory);
     const playerHistories = histories.filter(h => {
       const players = h.players as any[];
       return players.some(p => p.userId === userId);
@@ -212,7 +166,7 @@ export class MemStorage implements IStorage {
   }
 
   async getLeaderboard(): Promise<{ user: User; stats: { wins: number; totalWinnings: number; gamesPlayed: number } }[]> {
-    const allUsers = Array.from(this.users.values());
+    const allUsers = await db.select().from(users);
     const leaderboard = await Promise.all(
       allUsers.map(async user => ({
         user,
@@ -226,4 +180,4 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
