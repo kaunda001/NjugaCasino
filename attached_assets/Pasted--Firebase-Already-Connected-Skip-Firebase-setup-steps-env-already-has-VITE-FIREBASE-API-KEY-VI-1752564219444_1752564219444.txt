@@ -1,0 +1,253 @@
+ Firebase Already Connected
+✅ Skip Firebase setup steps — .env already has VITE_FIREBASE_API_KEY, VITE_FIREBASE_APP_ID, and VITE_FIREBASE_PROJECT_ID.
+
+🎯 GAME RULES + STRUCTURE
+🃏 1. Njuga (2–6 Players)
+🎯 Objective:
+Form a winning hand of 4 cards:
+
+1 Pair (e.g., 7♠ + 7♦)
+
+2 Followers (consecutive ranks: 5 → 6, or J → Q)
+
+🪜 Card Sequence:
+css
+Copy
+Edit
+A → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10 → J → Q → K
+🎮 Gameplay Flow:
+Players take turns clockwise (random starter)
+
+Each has 20 seconds to draw/discard
+
+Game ends when someone has a winning hand
+
+💸 Betting:
+Entry: K5–K5000
+
+Pot Split:
+
+House: 15%
+
+Winner: 85%
+
+Forfeit:
+
+20% of forfeiter’s pot goes to the main pot
+
+They exit with 80%
+
+🔳 2. Shansha (2 Players)
+🎯 Objective:
+Place 5 chips manually on a 4x6 hidden grid.
+
+Guess opponent’s chips by grid clicks.
+
+💰 Betting:
+Rooms: K50–K5000
+
+Example (K50): [K20, K10, K10, K5, K5]
+
+🎮 Turn-Based Flow:
+After both players click “Ready”, they are randomly assigned:
+
+Red Grid (green chips) or Blue Grid (green chips)
+
+Each turn:
+
+Player guesses 1 coordinate on opponent’s grid
+
+If they hit, the amount is captured and:
+
+That amount is redistributed among their active (non-hit) chips
+
+The grid is highlighted
+
+Red highlight = miss
+
+Green = hit
+
+All players see all guessed tiles
+
+Tiles cannot be guessed again
+
+Game ends when:
+
+All tiles guessed OR
+
+One player loses all chips
+
+💸 Pot Split:
+House: 15%
+
+Winner: 85%
+
+🛑 Forfeit:
+House: 5%
+
+Opponent: 15%
+
+Forfeiter: 80%
+
+♟️ 3. Chishingwa (Brazilian Checkers – 2 Players)
+🎯 Rules:
+8x8 board
+
+Must capture max pieces
+
+Kings can move long range
+
+Backward captures allowed
+
+🎮 Flow:
+Two players join → assigned Red or Black
+
+After both click “Ready”, game begins
+
+Each turn: 20 seconds max
+
+Forced captures + random starter
+
+💸 Pot Split:
+House: 15%
+
+Winner: 85%
+
+🛑 Forfeit:
+House: 5%
+
+Opponent: 15%
+
+Forfeiter: 80%
+
+🏗️ SYSTEM STRUCTURE
+🔁 Room Management (All Games)
+Room IDs: K{amount}-{timestamp}
+
+Rooms auto-created when full
+
+Game-specific limits:
+
+Njuga: Max 6
+
+Shansha & Chishingwa: Exactly 2
+
+Room auto-locks on player limit
+
+New room opens when a game starts
+
+👥 Session Management
+Track userId, roomId, gameType, and status
+
+Ghost players removed after 60s of inactivity
+
+Rejoins allowed within 1 minute
+
+Session ends on:
+
+Logout
+
+Window close
+
+Tab crash
+
+⏳ Turn Management
+All games use TurnManager per room
+
+20 seconds per player
+
+Skipped if no action
+
+Random player starts:
+
+Njuga: popup “🎉 You start!”
+
+Shansha & Chishingwa: no popup, just timer start
+
+🔘 BUTTONS PER GAME
+Game	Button	Behavior
+Njuga	Start Game	When 2+ players; system allows early start
+Shansha	Ready	Only enabled after chip placement
+Chishingwa	Ready	Appears after board loads
+
+🧩 Pages
+/njuga-room.tsx
+Card visuals
+
+Timer countdown
+
+Turn rotation
+
+Pot management
+
+Victory detection
+
+/shansha-room.tsx
+4x6 grid x 2 (per player)
+
+Manual chip placement
+
+Guess highlighting
+
+Redistribute logic
+
+Shared grid state + win detection
+
+/chishingwa-room.tsx
+8x8 board
+
+Red/Black assignment
+
+Piece movement + force capture logic
+
+Victory detection
+
+💅 UI + Assets
+✅ /assets/cards
+Card PNGs styled with glow for:
+
+Pair ✅
+
+Followers ✅
+
+✅ /assets/shansha-grid
+Grid template
+
+Chip markers
+
+Guess indicators (red/green glow)
+
+✅ /assets/checkers
+Token SVGs: red, black, crowned
+
+Board texture background
+
+✅ /components/ui
+Tailwind + shadcn components
+
+Button, Badge, Card, Toast, Timer
+
+🧠 Summary For Replit
+✅ Firebase Already Configured
+✅ Server Already Set
+server/routes.ts: defines WebSocket message handlers
+
+RoomManager.ts: controls rooms, game logic, turns, disconnection
+
+✅ Client Pages Per Game
+Each /client/pages/* game fully set up
+
+Use useGameWebSocket() for real-time communication
+
+🧪 Testing
+Use multiple tabs with different accounts
+
+Try:
+
+Forfeit
+
+Disconnect + Rejoin
+
+Chip placement
+
+Room creation & starting flow

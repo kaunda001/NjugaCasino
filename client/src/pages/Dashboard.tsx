@@ -211,34 +211,46 @@ export default function Dashboard() {
                   </TabsContent>
                   
                   <TabsContent value="create" className="mt-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCreateRoom('njuga')}>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <Card className="cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-300 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border-red-200 dark:border-red-800" onClick={() => handleCreateRoom('njuga')}>
                         <CardContent className="p-6 text-center">
-                          <div className="w-16 h-16 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <span className="text-2xl">🃏</span>
+                          <div className="w-20 h-20 bg-gradient-to-br from-red-500 to-red-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                            <span className="text-3xl">🃏</span>
                           </div>
-                          <h3 className="font-semibold">Njuga</h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">Card matching game</p>
+                          <h3 className="font-bold text-xl text-red-700 dark:text-red-300">Njuga</h3>
+                          <p className="text-sm text-red-600 dark:text-red-400 mt-2">2-6 Players • Card Game</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">Form pairs & followers to win</p>
+                          <div className="mt-3 text-xs text-red-600 dark:text-red-400 font-medium">
+                            Stakes: K5 - K5000
+                          </div>
                         </CardContent>
                       </Card>
                       
-                      <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCreateRoom('shansha')}>
+                      <Card className="cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-300 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-800" onClick={() => handleCreateRoom('shansha')}>
                         <CardContent className="p-6 text-center">
-                          <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <span className="text-2xl">💰</span>
+                          <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-green-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                            <span className="text-3xl">💰</span>
                           </div>
-                          <h3 className="font-semibold">Shansha</h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">Money grid game</p>
+                          <h3 className="font-bold text-xl text-green-700 dark:text-green-300">Shansha</h3>
+                          <p className="text-sm text-green-600 dark:text-green-400 mt-2">2 Players • Strategy Game</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">Hide chips & guess positions</p>
+                          <div className="mt-3 text-xs text-green-600 dark:text-green-400 font-medium">
+                            Stakes: K50 - K5000
+                          </div>
                         </CardContent>
                       </Card>
                       
-                      <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => handleCreateRoom('chinshingwa')}>
+                      <Card className="cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-300 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-800" onClick={() => handleCreateRoom('chinshingwa')}>
                         <CardContent className="p-6 text-center">
-                          <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <span className="text-2xl">👑</span>
+                          <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                            <span className="text-3xl">♟️</span>
                           </div>
-                          <h3 className="font-semibold">Chinshingwa</h3>
-                          <p className="text-sm text-gray-600 dark:text-gray-300">Checkers variant</p>
+                          <h3 className="font-bold text-xl text-blue-700 dark:text-blue-300">Chinshingwa</h3>
+                          <p className="text-sm text-blue-600 dark:text-blue-400 mt-2">2 Players • Board Game</p>
+                          <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">Brazilian checkers variant</p>
+                          <div className="mt-3 text-xs text-blue-600 dark:text-blue-400 font-medium">
+                            Stakes: K50 - K5000
+                          </div>
                         </CardContent>
                       </Card>
                     </div>

@@ -8,6 +8,18 @@ Njuga is a multiplayer real-time gambling platform built with React and Express.
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes
+
+### Game Implementation (July 15, 2025)
+- Created three complete game rooms with full specifications:
+  - **Njuga**: 2-6 players, card game with pairs and followers (K5-K5000 stakes)
+  - **Shansha**: 2 players, grid-based chip placement strategy game (K50-K5000 stakes)
+  - **Chinshingwa**: 2 players, Brazilian checkers variant (K50-K5000 stakes)
+- Enhanced dashboard with beautiful animated game tiles
+- Fixed authentication issues with API requests
+- Added proper routing for all game rooms
+- Implemented complete game UI with rules, timers, and player management
+
 ## System Architecture
 
 ### Frontend Architecture
@@ -115,9 +127,34 @@ Preferred communication style: Simple, everyday language.
 ```
 
 ### Game-Specific Logic
-Each game has its own component and logic:
-- **Njuga**: Card-based matching with deck management
-- **Shansha**: Grid-based money placement and guessing
-- **Chinshingwa**: Checkers variant with forfeit penalties
+Each game has its own dedicated room page with complete functionality:
+
+#### Njuga (Card Game)
+- **Players**: 2-6 players
+- **Objective**: Form winning hand of 1 pair + 2 consecutive cards
+- **Stakes**: K5 - K5000
+- **Features**: Real-time card display, winning hand detection, turn-based gameplay
+- **UI**: Card visualization with suit colors, discard pile, game actions
+
+#### Shansha (Strategy Game)
+- **Players**: Exactly 2 players
+- **Objective**: Hide 5 chips on 4x6 grid, guess opponent's positions
+- **Stakes**: K50 - K5000
+- **Features**: Chip placement phase, turn-based guessing, hit/miss feedback
+- **UI**: Dual grid display, chip value selection, guess highlighting
+
+#### Chinshingwa (Brazilian Checkers)
+- **Players**: Exactly 2 players
+- **Objective**: Capture all opponent pieces using checkers rules
+- **Stakes**: K50 - K5000
+- **Features**: 8x8 board, piece movement, king promotion, forced captures
+- **UI**: Interactive board, piece selection, valid move highlighting
+
+All games include:
+- 20-second turn timers
+- Real-time player status
+- Forfeit functionality with penalties
+- Proper pot distribution (85% winner, 15% house)
+- WebSocket-based real-time communication
 
 The architecture supports scalable real-time multiplayer gaming with proper separation of concerns between frontend, backend, and database layers.

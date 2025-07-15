@@ -5,6 +5,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Home from "@/pages/Home";
 import Dashboard from "@/pages/Dashboard";
+import NjugaRoom from "@/pages/NjugaRoom";
+import ShanshaRoom from "@/pages/ShanshaRoom";
+import ChinshingwaRoom from "@/pages/ChinshingwaRoom";
 import NotFound from "@/pages/not-found";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
@@ -27,6 +30,9 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/dashboard" component={Dashboard} />
+      <Route path="/njuga-room" component={NjugaRoom} />
+      <Route path="/shansha-room" component={ShanshaRoom} />
+      <Route path="/chinshingwa-room" component={ChinshingwaRoom} />
       <Route component={NotFound} />
     </Switch>
   );
