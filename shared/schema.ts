@@ -6,7 +6,7 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   phoneNumber: text("phone_number").notNull().unique(),
   password: text("password").notNull(),
-  displayName: text("display_name"),
+  displayName: text("display_name").notNull(),
   dateOfBirth: text("date_of_birth").notNull(),
   country: text("country").notNull(),
   balance: integer("balance").default(0),
@@ -58,6 +58,12 @@ export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
   updatedAt: true
+}).extend({
+  phoneNumber: z.string().min(1, "Phone number is required").refine(val => val.trim().length > 0, "Phone number cannot be empty"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  displayName: z.string().min(1, "Display name is required").refine(val => val.trim().length > 0, "Display name cannot be empty"),
+  dateOfBirth: z.string().min(1, "Date of birth is required").refine(val => val.trim().length > 0, "Date of birth cannot be empty"),
+  country: z.string().min(1, "Country is required").refine(val => val.trim().length > 0, "Country cannot be empty")
 });
 
 export const signUpSchema = insertUserSchema.extend({
@@ -65,6 +71,18 @@ export const signUpSchema = insertUserSchema.extend({
 }).refine(data => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"]
+}).refine(data => data.phoneNumber && data.phoneNumber.trim() !== "", {
+  message: "Phone number is required",
+  path: ["phoneNumber"]
+}).refine(data => data.displayName && data.displayName.trim() !== "", {
+  message: "Display name is required",
+  path: ["displayName"]
+}).refine(data => data.dateOfBirth && data.dateOfBirth.trim() !== "", {
+  message: "Date of birth is required",
+  path: ["dateOfBirth"]
+}).refine(data => data.country && data.country.trim() !== "", {
+  message: "Country is required",
+  path: ["country"]
 });
 
 export const signInSchema = z.object({

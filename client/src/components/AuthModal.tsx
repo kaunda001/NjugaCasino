@@ -18,6 +18,7 @@ interface AuthModalProps {
 }
 
 const countries = [
+  { value: 'ZM', label: 'Zambia' },
   { value: 'US', label: 'United States' },
   { value: 'GB', label: 'United Kingdom' },
   { value: 'CA', label: 'Canada' },
@@ -104,7 +105,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
       confirmPassword: '',
       displayName: '',
       dateOfBirth: '',
-      country: ''
+      country: 'ZM'
     }
   });
 
@@ -316,7 +317,7 @@ export function AuthModal({ isOpen, onClose }: AuthModalProps) {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Country</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <div className="flex items-center">
