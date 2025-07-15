@@ -8,22 +8,41 @@ export function useSocket() {
   const [isConnected, setIsConnected] = useState(false);
   const [currentRoom, setCurrentRoom] = useState<RoomInfo | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
+  const isConnectingRef = useRef(false);
 
   useEffect(() => {
-    connectSocket();
+    // Only connect if authenticated
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      connectSocket();
+    }
     
     return () => {
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
       if (socket) {
-        socket.close();
+        socket.close(1000, 'Component unmounting');
       }
     };
   }, []);
 
   const connectSocket = async () => {
+    // Prevent multiple simultaneous connections
+    if (isConnectingRef.current) return;
+    isConnectingRef.current = true;
+    
     try {
+      // Clear any existing timeout
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+      
+      // Close existing socket if any
+      if (socket) {
+        socket.close(1000, 'Reconnecting');
+      }
+      
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
       const wsUrl = `${protocol}//${window.location.host}/ws`;
       const ws = new WebSocket(wsUrl);
@@ -31,6 +50,7 @@ export function useSocket() {
       ws.onopen = async () => {
         console.log('WebSocket connected');
         setIsConnected(true);
+        isConnectingRef.current = false;
         
         // Authenticate with server
         const token = await getToken();
@@ -48,24 +68,36 @@ export function useSocket() {
         }
       };
       
-      ws.onclose = () => {
+      ws.onclose = (event) => {
         console.log('WebSocket disconnected');
         setIsConnected(false);
         setSocket(null);
+        isConnectingRef.current = false;
         
-        // Attempt to reconnect after 3 seconds
-        reconnectTimeoutRef.current = setTimeout(() => {
-          connectSocket();
-        }, 3000);
+        // Only reconnect if it wasn't a normal close and we have a token
+        if (event.code !== 1000 && localStorage.getItem('authToken')) {
+          reconnectTimeoutRef.current = setTimeout(() => {
+            connectSocket();
+          }, 3000);
+        }
       };
       
       ws.onerror = (error) => {
         console.error('WebSocket error:', error);
+        isConnectingRef.current = false;
       };
       
       setSocket(ws);
     } catch (error) {
       console.error('Error connecting to WebSocket:', error);
+      isConnectingRef.current = false;
+      
+      // Retry connection after error if we have a token
+      if (localStorage.getItem('authToken')) {
+        reconnectTimeoutRef.current = setTimeout(() => {
+          connectSocket();
+        }, 3000);
+      }
     }
   };
 

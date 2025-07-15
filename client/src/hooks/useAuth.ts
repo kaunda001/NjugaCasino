@@ -54,6 +54,9 @@ export function useAuth() {
       const result = await response.json();
       setUser(result.user);
       localStorage.setItem('authToken', result.token);
+      
+      // Force redirect to dashboard after successful signup
+      window.location.href = '/dashboard';
     } catch (error) {
       console.error('Error signing up:', error);
       throw error;
@@ -66,6 +69,9 @@ export function useAuth() {
       const result = await response.json();
       setUser(result.user);
       localStorage.setItem('authToken', result.token);
+      
+      // Force redirect to dashboard after successful login
+      window.location.href = '/dashboard';
     } catch (error) {
       console.error('Error signing in:', error);
       throw error;

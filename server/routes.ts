@@ -224,6 +224,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   wss.on('connection', (ws: WebSocket, req) => {
     console.log('New WebSocket connection');
+    let userId: number | null = null;
     
     ws.on('message', async (message) => {
       try {
@@ -236,6 +237,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
               const user = await storage.getUser(decoded.userId);
               
               if (user) {
+                userId = user.id;
                 roomManager.addPlayer(user.id, ws);
                 const { password, ...userResponse } = user;
                 ws.send(JSON.stringify({ type: 'authenticated', user: userResponse }));
@@ -280,6 +282,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     ws.on('close', () => {
       console.log('WebSocket connection closed');
+      if (userId) {
+        roomManager.removePlayer(userId);
+      }
     });
   });
 
