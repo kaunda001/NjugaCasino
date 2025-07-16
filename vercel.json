@@ -20,8 +20,5 @@
         }
       ]
     }
-  ],
-  "images": {
-    "domains": ["vercel.app"]
-  }
+  ]
 }
