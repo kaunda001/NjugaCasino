@@ -1,0 +1,4 @@
+"devDependencies": {
+  "vite": "^5.x.x",  // ✅ MUST exist
+  ...
+}
