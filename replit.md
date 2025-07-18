@@ -10,6 +10,25 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### Wallet Integration (July 17, 2025)
+- **Added comprehensive wallet section**: Created wallet card on Dashboard with deposit/withdraw functionality
+- **Multiple payment methods**: Integrated Airtel Money, MTN Mobile Money, and Visa/Mastercard options
+- **Backend API endpoints**: Implemented `/api/deposit/` and `/api/withdraw/` routes for all payment methods
+- **Real-time balance updates**: Automatic balance refresh after successful transactions
+- **Form validation**: Added proper validation for amounts, phone numbers, and insufficient balance checks
+- **User feedback**: Enhanced toast notifications for transaction success/failure states
+- **Prepared for live integration**: Backend ready for actual payment provider APIs
+
+### Clean Slate Rebuild (July 17, 2025)
+- **Complete game room rebuild**: Recreated all three game rooms from scratch following implementation plan
+- **Unified lobby system**: Created comprehensive lobby page with game selection and stake customization
+- **Enhanced room naming**: Implemented K{amount}-{timestamp} format for room IDs as specified
+- **Simplified architecture**: Removed complex existing implementations in favor of clean, maintainable code
+- **Updated Dashboard**: Added lobby access and restructured quick-join functionality
+- **Consistent UI/UX**: Standardized component usage across all game rooms
+- **Proper routing**: Updated App.tsx to use new room file structure
+- **Fixed room joining**: Backend now returns roomId for proper room navigation
+
 ### Auto-Room Management System (July 15, 2025)
 - **Removed manual room creation**: Players no longer create rooms manually
 - **Implemented auto-room discovery**: System automatically finds available rooms or creates new ones
